@@ -1,0 +1,28 @@
+root@kali:~/htb/boxes/conceal# cat IKEVPN/ipsec.secrets
+# This file holds shared secrets or RSA private keys for authentication.
+#
+# # RSA private key for this host, authenticating it to any other host
+# # which knows the public part.
+#
+# # this file is managed with debconf and will contain the automatically created private key                                                         
+# #include /var/lib/strongswan/ipsec.secrets.inc
+# #
+Destitute %any : PSK "Dudecake1!"
+
+root@kali:~/htb/boxes/conceal# cat IKEVPN/ipsec.conf 
+config setup
+        charondebug="all"
+
+conn conceal
+        authby=secret
+        auto=start
+        ike=3des-sha1-modp1024
+        left=10.10.12.246
+        right=10.10.10.116
+        rightsubnet=10.10.10.116[tcp/]
+        keyexchange=ikev1
+        type=transport
+        esp=3des-sha1
+        rightprotoport=udp
+
+include /var/lib/strongswan/ipsec.conf
