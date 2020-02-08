@@ -35,3 +35,14 @@ svc-netapp
 
 
 https://gist.github.com/gopalindians/94c2c8617028cfe7a5788f760e036fd2
+
+
+kali@kali:~/Documents/htb$ nmap -sT -Pn -p 5985 10.10.10.172
+Starting Nmap 7.80 ( https://nmap.org ) at 2020-02-08 01:15 UTC
+Nmap scan report for www.megabank.local (10.10.10.172)
+Host is up (0.15s latency).
+
+PORT     STATE SERVICE
+5985/tcp open  wsman
+
+Nmap done: 1 IP address (1 host up) scanned in 0.18 seconds
